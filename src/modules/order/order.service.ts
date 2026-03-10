@@ -1,0 +1,114 @@
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Order } from './entities/order.entity';
+import { OrderItem } from './entities/order-item.entity';
+import { CartService } from '../cart/cart.service';
+import { ProductService } from '../product/product.service';
+import { CreateOrderDto, UpdateOrderStatusDto } from './dto';
+import { PaginationDto } from '../../common/dto/pagination.dto';
+import {
+  PaginatedResult,
+  paginateRaw,
+  buildPaginatedResult,
+} from '../../common/interfaces/paginated-result.interface';
+
+@Injectable()
+export class OrderService {
+  constructor(
+    @InjectRepository(Order)
+    private readonly orderRepository: Repository<Order>,
+    @InjectRepository(OrderItem)
+    private readonly orderItemRepository: Repository<OrderItem>,
+    private readonly cartService: CartService,
+    private readonly productService: ProductService,
+  ) {}
+
+  async checkout(userId: string, dto: CreateOrderDto): Promise<Order> {
+    const cart = await this.cartService.getCart(userId);
+
+    if (!cart.items || cart.items.length === 0) {
+      throw new BadRequestException('Cart is empty');
+    }
+
+    let totalAmount = 0;
+    const orderItems: OrderItem[] = [];
+
+    for (const cartItem of cart.items) {
+      const product = await this.productService.findById(cartItem.productId);
+
+      if (product.stock < cartItem.quantity) {
+        throw new BadRequestException(
+          `Insufficient stock for product "${product.name}"`,
+        );
+      }
+
+      totalAmount += Number(product.price) * cartItem.quantity;
+
+      const orderItem = this.orderItemRepository.create({
+        productId: cartItem.productId,
+        quantity: cartItem.quantity,
+        priceAtPurchase: product.price,
+      });
+      orderItems.push(orderItem);
+
+      product.stock -= cartItem.quantity;
+      await this.productService.update(product.id, { stock: product.stock });
+    }
+
+    const order = this.orderRepository.create({
+      userId,
+      shippingAddress: dto.shippingAddress,
+      totalAmount,
+      items: orderItems,
+    });
+
+    const savedOrder = await this.orderRepository.save(order);
+    await this.cartService.clearCart(userId);
+
+    return savedOrder;
+  }
+
+  async findAllByUser(
+    userId: string,
+    pagination: PaginationDto,
+  ): Promise<PaginatedResult<Order>> {
+    const { take, skip } = paginateRaw(pagination.page, pagination.limit);
+    const [data, totalItems] = await this.orderRepository.findAndCount({
+      where: { userId },
+      relations: ['items', 'items.product'],
+      order: { createdAt: 'DESC' },
+      take,
+      skip,
+    });
+    return buildPaginatedResult(data, totalItems, pagination.page, pagination.limit);
+  }
+
+  async findAll(pagination: PaginationDto): Promise<PaginatedResult<Order>> {
+    const { take, skip } = paginateRaw(pagination.page, pagination.limit);
+    const [data, totalItems] = await this.orderRepository.findAndCount({
+      relations: ['items', 'items.product', 'user'],
+      order: { createdAt: 'DESC' },
+      take,
+      skip,
+    });
+    return buildPaginatedResult(data, totalItems, pagination.page, pagination.limit);
+  }
+
+  async findById(id: string): Promise<Order> {
+    const order = await this.orderRepository.findOne({
+      where: { id },
+      relations: ['items', 'items.product'],
+    });
+    if (!order) {
+      throw new NotFoundException(`Order with ID "${id}" not found`);
+    }
+    return order;
+  }
+
+  async updateStatus(id: string, dto: UpdateOrderStatusDto): Promise<Order> {
+    const order = await this.findById(id);
+    order.status = dto.status;
+    return this.orderRepository.save(order);
+  }
+}
