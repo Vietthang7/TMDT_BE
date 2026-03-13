@@ -11,6 +11,7 @@ import { CartModule } from './modules/cart/cart.module';
 import { OrderModule } from './modules/order/order.module';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 import { CouponModule } from './modules/coupon/coupon.module';
+import { ReviewModule } from './modules/review/review.module';
 import { SeedModule } from './database/seeds/seed.module';
 
 @Module({
@@ -40,6 +41,7 @@ import { SeedModule } from './database/seeds/seed.module';
     OrderModule,
     CloudinaryModule,
     CouponModule,
+    ReviewModule,
     SeedModule,
   ],
 })

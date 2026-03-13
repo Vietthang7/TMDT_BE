@@ -11,6 +11,7 @@ import {
 import { OrderItem } from '../../order/entities/order-item.entity';
 import { CartItem } from '../../cart/entities/cart-item.entity';
 import { Category } from '../../category/entities/category.entity';
+import { Review } from '../../review/entities/review.entity';
 
 @Entity('products')
 export class Product {
@@ -63,6 +64,15 @@ export class Product {
 
   @OneToMany(() => CartItem, (cartItem) => cartItem.product)
   cartItems: CartItem[];
+
+  @OneToMany(() => Review, (review) => review.product)
+  reviews: Review[];
+
+  @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
+  averageRating: number;
+
+  @Column({ default: 0 })
+  reviewCount: number;
 
   @CreateDateColumn()
   createdAt: Date;
