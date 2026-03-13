@@ -9,6 +9,7 @@ import { CartItem } from '../../modules/cart/entities/cart-item.entity';
 import { Order } from '../../modules/order/entities/order.entity';
 import { OrderItem } from '../../modules/order/entities/order-item.entity';
 import { PhysicalProfile } from '../../modules/profile/entities/physical-profile.entity';
+import { Coupon } from '../../modules/coupon/entities/coupon.entity';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PhysicalProfile } from '../../modules/profile/entities/physical-profile
       Order,
       OrderItem,
       PhysicalProfile,
+      Coupon,
     ]),
   ],
   providers: [DataSeeder],

@@ -10,7 +10,8 @@ import { CartItem } from '../../modules/cart/entities/cart-item.entity';
 import { Order } from '../../modules/order/entities/order.entity';
 import { OrderItem } from '../../modules/order/entities/order-item.entity';
 import { PhysicalProfile } from '../../modules/profile/entities/physical-profile.entity';
-import { UserRole, FitnessGoal, OrderStatus } from '../../common/enums';
+import { Coupon } from '../../modules/coupon/entities/coupon.entity';
+import { UserRole, FitnessGoal, OrderStatus, DiscountType } from '../../common/enums';
 
 @Injectable()
 export class DataSeeder implements OnModuleInit {
@@ -33,15 +34,97 @@ export class DataSeeder implements OnModuleInit {
     private readonly orderItemRepo: Repository<OrderItem>,
     @InjectRepository(PhysicalProfile)
     private readonly profileRepo: Repository<PhysicalProfile>,
+    @InjectRepository(Coupon)
+    private readonly couponRepo: Repository<Coupon>,
   ) {}
 
   async onModuleInit(): Promise<void> {
     const productCount = await this.productRepo.count();
     if (productCount > 0) {
       this.logger.log('Data already seeded, skipping...');
+      await this.seedCouponsIfNeeded();
       return;
     }
     await this.seed();
+  }
+
+  private async seedCouponsIfNeeded(): Promise<void> {
+    const couponCount = await this.couponRepo.count();
+    if (couponCount > 0) return;
+
+    this.logger.log('Seeding coupons...');
+    const coupons = await this.couponRepo.save([
+      {
+        code: 'WELCOME10',
+        discountType: DiscountType.PERCENTAGE,
+        discountValue: 10,
+        minOrderAmount: 500000,
+        maxDiscountAmount: 200000,
+        usageLimit: 100,
+        usedCount: 12,
+        startDate: new Date('2025-01-01'),
+        endDate: new Date('2026-12-31'),
+        isActive: true,
+      },
+      {
+        code: 'SUMMER2024',
+        discountType: DiscountType.PERCENTAGE,
+        discountValue: 15,
+        minOrderAmount: 1000000,
+        maxDiscountAmount: 500000,
+        usageLimit: 50,
+        usedCount: 48,
+        startDate: new Date('2024-06-01'),
+        endDate: new Date('2024-08-31'),
+        isActive: false,
+      },
+      {
+        code: 'GIAM50K',
+        discountType: DiscountType.FIXED_AMOUNT,
+        discountValue: 50000,
+        minOrderAmount: 300000,
+        usageLimit: 200,
+        usedCount: 85,
+        startDate: new Date('2025-01-01'),
+        endDate: new Date('2026-12-31'),
+        isActive: true,
+      },
+      {
+        code: 'GIAM100K',
+        discountType: DiscountType.FIXED_AMOUNT,
+        discountValue: 100000,
+        minOrderAmount: 800000,
+        usageLimit: 50,
+        usedCount: 20,
+        startDate: new Date('2025-06-01'),
+        endDate: new Date('2026-06-30'),
+        isActive: true,
+      },
+      {
+        code: 'VIP20',
+        discountType: DiscountType.PERCENTAGE,
+        discountValue: 20,
+        minOrderAmount: 2000000,
+        maxDiscountAmount: 1000000,
+        usageLimit: 0,
+        usedCount: 5,
+        startDate: new Date('2025-01-01'),
+        endDate: new Date('2026-12-31'),
+        isActive: true,
+      },
+      {
+        code: 'FREESHIP',
+        discountType: DiscountType.FIXED_AMOUNT,
+        discountValue: 30000,
+        minOrderAmount: 0,
+        usageLimit: 500,
+        usedCount: 230,
+        startDate: new Date('2025-01-01'),
+        endDate: new Date('2026-12-31'),
+        isActive: true,
+      },
+    ]);
+    this.logger.log(`Seeded ${coupons.length} coupons`);
   }
 
   private async seed(): Promise<void> {
@@ -350,6 +433,81 @@ export class DataSeeder implements OnModuleInit {
 
     this.logger.log('Seeded 3 carts with items');
 
+    // ── Coupons ──────────────────────────────────────
+    const coupons = await this.couponRepo.save([
+      {
+        code: 'WELCOME10',
+        discountType: DiscountType.PERCENTAGE,
+        discountValue: 10,
+        minOrderAmount: 500000,
+        maxDiscountAmount: 200000,
+        usageLimit: 100,
+        usedCount: 12,
+        startDate: new Date('2025-01-01'),
+        endDate: new Date('2026-12-31'),
+        isActive: true,
+      },
+      {
+        code: 'SUMMER2024',
+        discountType: DiscountType.PERCENTAGE,
+        discountValue: 15,
+        minOrderAmount: 1000000,
+        maxDiscountAmount: 500000,
+        usageLimit: 50,
+        usedCount: 48,
+        startDate: new Date('2024-06-01'),
+        endDate: new Date('2024-08-31'),
+        isActive: false,
+      },
+      {
+        code: 'GIAM50K',
+        discountType: DiscountType.FIXED_AMOUNT,
+        discountValue: 50000,
+        minOrderAmount: 300000,
+        usageLimit: 200,
+        usedCount: 85,
+        startDate: new Date('2025-01-01'),
+        endDate: new Date('2026-12-31'),
+        isActive: true,
+      },
+      {
+        code: 'GIAM100K',
+        discountType: DiscountType.FIXED_AMOUNT,
+        discountValue: 100000,
+        minOrderAmount: 800000,
+        usageLimit: 50,
+        usedCount: 20,
+        startDate: new Date('2025-06-01'),
+        endDate: new Date('2026-06-30'),
+        isActive: true,
+      },
+      {
+        code: 'VIP20',
+        discountType: DiscountType.PERCENTAGE,
+        discountValue: 20,
+        minOrderAmount: 2000000,
+        maxDiscountAmount: 1000000,
+        usageLimit: 0,
+        usedCount: 5,
+        startDate: new Date('2025-01-01'),
+        endDate: new Date('2026-12-31'),
+        isActive: true,
+      },
+      {
+        code: 'FREESHIP',
+        discountType: DiscountType.FIXED_AMOUNT,
+        discountValue: 30000,
+        minOrderAmount: 0,
+        usageLimit: 500,
+        usedCount: 230,
+        startDate: new Date('2025-01-01'),
+        endDate: new Date('2026-12-31'),
+        isActive: true,
+      },
+    ]);
+
+    this.logger.log(`Seeded ${coupons.length} coupons`);
+
     // ── Orders ─────────────────────────────────────────
     const order1 = await this.orderRepo.save({
       userId: customers[0].id,
@@ -411,7 +569,10 @@ export class DataSeeder implements OnModuleInit {
     const order4 = await this.orderRepo.save({
       userId: customers[0].id,
       status: OrderStatus.CONFIRMED,
-      totalAmount: Number(products[3].price) + Number(products[8].price),
+      totalAmount: Number(products[3].price) + Number(products[8].price) - 50000,
+      discountAmount: 50000,
+      couponId: coupons[2].id,
+      couponCode: coupons[2].code,
       shippingAddress: '123 Nguyễn Huệ, Quận 1, TP.HCM',
     });
     await this.orderItemRepo.save([

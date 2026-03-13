@@ -10,4 +10,9 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({ example: 'SUMMER2024', description: 'Mã giảm giá (nếu có)' })
+  @IsOptional()
+  @IsString()
+  couponCode?: string;
 }

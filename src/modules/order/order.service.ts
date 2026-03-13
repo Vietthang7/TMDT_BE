@@ -5,6 +5,7 @@ import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { CartService } from '../cart/cart.service';
 import { ProductService } from '../product/product.service';
+import { CouponService } from '../coupon/coupon.service';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import {
@@ -22,6 +23,7 @@ export class OrderService {
     private readonly orderItemRepository: Repository<OrderItem>,
     private readonly cartService: CartService,
     private readonly productService: ProductService,
+    private readonly couponService: CouponService,
   ) {}
 
   async checkout(userId: string, dto: CreateOrderDto): Promise<Order> {
@@ -31,7 +33,7 @@ export class OrderService {
       throw new BadRequestException('Cart is empty');
     }
 
-    let totalAmount = 0;
+    let subtotal = 0;
     const orderItems: OrderItem[] = [];
 
     for (const cartItem of cart.items) {
@@ -43,7 +45,7 @@ export class OrderService {
         );
       }
 
-      totalAmount += Number(product.price) * cartItem.quantity;
+      subtotal += Number(product.price) * cartItem.quantity;
 
       const orderItem = this.orderItemRepository.create({
         productId: cartItem.productId,
@@ -56,10 +58,28 @@ export class OrderService {
       await this.productService.update(product.id, { stock: product.stock });
     }
 
+    // ── Apply coupon if provided ──────────────────────
+    let discountAmount = 0;
+    let couponId: string | undefined;
+    let couponCode: string | undefined;
+
+    if (dto.couponCode) {
+      const coupon = await this.couponService.validateCoupon(dto.couponCode, subtotal);
+      discountAmount = this.couponService.calculateDiscount(coupon, subtotal);
+      couponId = coupon.id;
+      couponCode = coupon.code;
+      await this.couponService.incrementUsage(coupon.id);
+    }
+
+    const totalAmount = subtotal - discountAmount;
+
     const order = this.orderRepository.create({
       userId,
       shippingAddress: dto.shippingAddress,
       totalAmount,
+      discountAmount,
+      couponId,
+      couponCode,
       items: orderItems,
     });
 
@@ -76,7 +96,7 @@ export class OrderService {
     const { take, skip } = paginateRaw(pagination.page, pagination.limit);
     const [data, totalItems] = await this.orderRepository.findAndCount({
       where: { userId },
-      relations: ['items', 'items.product'],
+      relations: ['items', 'items.product', 'coupon'],
       order: { createdAt: 'DESC' },
       take,
       skip,
@@ -87,7 +107,7 @@ export class OrderService {
   async findAll(pagination: PaginationDto): Promise<PaginatedResult<Order>> {
     const { take, skip } = paginateRaw(pagination.page, pagination.limit);
     const [data, totalItems] = await this.orderRepository.findAndCount({
-      relations: ['items', 'items.product', 'user'],
+      relations: ['items', 'items.product', 'user', 'coupon'],
       order: { createdAt: 'DESC' },
       take,
       skip,
@@ -98,7 +118,7 @@ export class OrderService {
   async findById(id: string): Promise<Order> {
     const order = await this.orderRepository.findOne({
       where: { id },
-      relations: ['items', 'items.product'],
+      relations: ['items', 'items.product', 'coupon'],
     });
     if (!order) {
       throw new NotFoundException(`Order with ID "${id}" not found`);

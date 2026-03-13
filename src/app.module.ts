@@ -10,6 +10,7 @@ import { CategoryModule } from './modules/category/category.module';
 import { CartModule } from './modules/cart/cart.module';
 import { OrderModule } from './modules/order/order.module';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
+import { CouponModule } from './modules/coupon/coupon.module';
 import { SeedModule } from './database/seeds/seed.module';
 
 @Module({
@@ -38,6 +39,7 @@ import { SeedModule } from './database/seeds/seed.module';
     CartModule,
     OrderModule,
     CloudinaryModule,
+    CouponModule,
     SeedModule,
   ],
 })

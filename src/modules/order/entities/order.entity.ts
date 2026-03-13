@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { OrderItem } from './order-item.entity';
+import { Coupon } from '../../coupon/entities/coupon.entity';
 import { OrderStatus } from '../../../common/enums';
 
 @Entity('orders')
@@ -34,6 +35,18 @@ export class Order {
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   totalAmount: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  discountAmount: number;
+
+  @ManyToOne(() => Coupon, { nullable: true })
+  coupon: Coupon;
+
+  @Column({ nullable: true })
+  couponId: string;
+
+  @Column({ nullable: true })
+  couponCode: string;
 
   @Column({ nullable: true })
   shippingAddress: string;
