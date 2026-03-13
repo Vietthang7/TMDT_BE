@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { databaseConfig, jwtConfig, cloudinaryConfig } from './config';
+import { databaseConfig, jwtConfig, cloudinaryConfig, mailConfig } from './config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { ProfileModule } from './modules/profile/profile.module';
@@ -18,7 +18,7 @@ import { SeedModule } from './database/seeds/seed.module';
     // ── Global Config ──────────────────────────────────
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, jwtConfig, cloudinaryConfig],
+      load: [databaseConfig, jwtConfig, cloudinaryConfig, mailConfig],
       envFilePath: '.env',
     }),
 

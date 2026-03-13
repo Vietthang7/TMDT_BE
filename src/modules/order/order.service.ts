@@ -1,11 +1,13 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
+import { User } from '../user/entities/user.entity';
 import { CartService } from '../cart/cart.service';
 import { ProductService } from '../product/product.service';
 import { CouponService } from '../coupon/coupon.service';
+import { MailService } from '../mail/mail.service';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import {
@@ -16,6 +18,8 @@ import {
 
 @Injectable()
 export class OrderService {
+  private readonly logger = new Logger(OrderService.name);
+
   constructor(
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
@@ -24,6 +28,7 @@ export class OrderService {
     private readonly cartService: CartService,
     private readonly productService: ProductService,
     private readonly couponService: CouponService,
+    private readonly mailService: MailService,
   ) {}
 
   async checkout(userId: string, dto: CreateOrderDto): Promise<Order> {
@@ -85,6 +90,17 @@ export class OrderService {
 
     const savedOrder = await this.orderRepository.save(order);
     await this.cartService.clearCart(userId);
+
+    // ── Send order confirmation email ────────────────
+    const fullOrder = await this.orderRepository.findOne({
+      where: { id: savedOrder.id },
+      relations: ['items', 'items.product', 'user'],
+    });
+    if (fullOrder?.user?.email) {
+      this.mailService
+        .sendOrderConfirmation(fullOrder.user.email, fullOrder)
+        .catch((err) => this.logger.error(`Mail error: ${err.message}`));
+    }
 
     return savedOrder;
   }
