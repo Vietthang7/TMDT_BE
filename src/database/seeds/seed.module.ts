@@ -10,6 +10,7 @@ import { Order } from '../../modules/order/entities/order.entity';
 import { OrderItem } from '../../modules/order/entities/order-item.entity';
 import { PhysicalProfile } from '../../modules/profile/entities/physical-profile.entity';
 import { Coupon } from '../../modules/coupon/entities/coupon.entity';
+import { Addresses } from '../../modules/addresses/entities/addresses.entity';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { Coupon } from '../../modules/coupon/entities/coupon.entity';
       OrderItem,
       PhysicalProfile,
       Coupon,
+      Addresses,
     ]),
   ],
   providers: [DataSeeder],

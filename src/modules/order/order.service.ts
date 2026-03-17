@@ -10,11 +10,13 @@ import { CouponService } from '../coupon/coupon.service';
 import { MailService } from '../mail/mail.service';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { AddressesService } from '../addresses/addresses.service';
 import {
   PaginatedResult,
   paginateRaw,
   buildPaginatedResult,
 } from '../../common/interfaces/paginated-result.interface';
+
 
 @Injectable()
 export class OrderService {
@@ -29,6 +31,7 @@ export class OrderService {
     private readonly productService: ProductService,
     private readonly couponService: CouponService,
     private readonly mailService: MailService,
+    private readonly addressesService: AddressesService,
   ) {}
 
   async checkout(userId: string, dto: CreateOrderDto): Promise<Order> {
@@ -36,6 +39,18 @@ export class OrderService {
 
     if (!cart.items || cart.items.length === 0) {
       throw new BadRequestException('Cart is empty');
+    }
+
+    // ── Get address ──────────────────────
+    let address;
+    if (dto.shippingAddress) {
+      address = await this.addressesService.findById(dto.shippingAddress, userId);
+    } else {
+      address = await this.addressesService.getDefault(userId);
+    }
+
+    if (!address) {
+      throw new BadRequestException('No address found');
     }
 
     let subtotal = 0;

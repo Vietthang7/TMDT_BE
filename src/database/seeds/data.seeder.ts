@@ -12,6 +12,7 @@ import { OrderItem } from '../../modules/order/entities/order-item.entity';
 import { PhysicalProfile } from '../../modules/profile/entities/physical-profile.entity';
 import { Coupon } from '../../modules/coupon/entities/coupon.entity';
 import { UserRole, FitnessGoal, OrderStatus, DiscountType } from '../../common/enums';
+import { Addresses } from '../../modules/addresses/entities/addresses.entity';
 
 @Injectable()
 export class DataSeeder implements OnModuleInit {
@@ -36,6 +37,8 @@ export class DataSeeder implements OnModuleInit {
     private readonly profileRepo: Repository<PhysicalProfile>,
     @InjectRepository(Coupon)
     private readonly couponRepo: Repository<Coupon>,
+    @InjectRepository(Addresses)
+    private readonly addressesRepo: Repository<Addresses>,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -590,6 +593,32 @@ export class DataSeeder implements OnModuleInit {
       },
     ]);
 
+    // ── Addresses ───────────────────────────────────────
+    const address1 = await this.addressesRepo.save({
+      street: '123 Nguyễn Huệ',
+      state: 'TP.HCM',
+      city: 'TP.HCM',
+      isDefault: true,
+      user: { id: customers[0].id },
+    });
+
+    const address2 = await this.addressesRepo.save({
+      street: '456 Lê Lợi',
+      state: 'TP.HCM',
+      city: 'TP.HCM',
+      isDefault: true,
+      user: { id: customers[1].id },
+    });
+
+    const address3 = await this.addressesRepo.save({
+      street: '789 Trần Hưng Đạo',
+      state: 'TP.HCM',
+      city: 'TP.HCM',
+      isDefault: true,
+      user: { id: customers[2].id },
+    });
+
+    this.logger.log('Seeded 3 addresses');
     this.logger.log('Seeded 4 orders with items');
     this.logger.log('Data seeding completed!');
   }

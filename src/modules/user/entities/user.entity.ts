@@ -11,6 +11,7 @@ import { UserRole } from '../../../common/enums';
 import { PhysicalProfile } from '../../profile/entities/physical-profile.entity';
 import { Order } from '../../order/entities/order.entity';
 import { Cart } from '../../cart/entities/cart.entity';
+import { Addresses } from '../../addresses/entities/addresses.entity';
 
 @Entity('users')
 export class User {
@@ -43,6 +44,9 @@ export class User {
 
   @OneToOne(() => Cart, (cart) => cart.user, { cascade: true })
   cart: Cart;
+
+  @OneToMany(() => Addresses, (address) => address.user, { cascade: true })
+  addresses: Addresses[];
 
   @CreateDateColumn()
   createdAt: Date;
