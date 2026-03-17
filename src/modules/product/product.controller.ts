@@ -20,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { ProductService } from './product.service';
 import { CreateProductDto, UpdateProductDto } from './dto';
+import { FilterProductDto } from './dto/filter-product-dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { UserRole } from '../../common/enums';
@@ -34,14 +35,8 @@ export class ProductController {
   @ApiOperation({ summary: 'Get all active products' })
   @ApiResponse({ status: 200, description: 'List of products.' })
   @ApiQuery({ name: 'categoryId', required: false, description: 'Filter by category UUID' })
-  findAll(
-    @Query() pagination: PaginationDto,
-    @Query('categoryId') categoryId?: string,
-  ) {
-    if (categoryId) {
-      return this.productService.findByCategory(categoryId, pagination);
-    }
-    return this.productService.findAll(pagination);
+  findAll(@Query() query: FilterProductDto) {
+    return this.productService.findAll(query);
   }
 
   @Get(':id')
