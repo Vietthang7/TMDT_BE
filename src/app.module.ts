@@ -13,6 +13,8 @@ import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 import { CouponModule } from './modules/coupon/coupon.module';
 import { ReviewModule } from './modules/review/review.module';
 import { SeedModule } from './database/seeds/seed.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { AddressesModule } from './modules/addresses/addresses.module';
 
 @Module({
   imports: [
@@ -43,6 +45,8 @@ import { SeedModule } from './database/seeds/seed.module';
     CouponModule,
     ReviewModule,
     SeedModule,
+    AdminModule,
+    AddressesModule,
   ],
 })
 export class AppModule {}
