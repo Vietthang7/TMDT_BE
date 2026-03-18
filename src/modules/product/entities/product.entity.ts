@@ -12,6 +12,7 @@ import { OrderItem } from '../../order/entities/order-item.entity';
 import { CartItem } from '../../cart/entities/cart-item.entity';
 import { Category } from '../../category/entities/category.entity';
 import { Review } from '../../review/entities/review.entity';
+import { WishlistItem } from '../../wishlist/entities/wishlist-item.entity';
 
 @Entity('products')
 export class Product {
@@ -67,6 +68,9 @@ export class Product {
 
   @OneToMany(() => Review, (review) => review.product)
   reviews: Review[];
+
+  @OneToMany(() => WishlistItem, (wishlistItem) => wishlistItem.product)
+  wishlistItems: WishlistItem[];
 
   @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
   averageRating: number;

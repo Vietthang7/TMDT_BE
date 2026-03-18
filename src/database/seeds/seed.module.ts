@@ -11,7 +11,8 @@ import { OrderItem } from '../../modules/order/entities/order-item.entity';
 import { PhysicalProfile } from '../../modules/profile/entities/physical-profile.entity';
 import { Coupon } from '../../modules/coupon/entities/coupon.entity';
 import { Addresses } from '../../modules/addresses/entities/addresses.entity';
-
+import { Wishlist } from '../../modules/wishlist/entities/wishlist.entity';
+import { WishlistItem } from '../../modules/wishlist/entities/wishlist-item.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -25,6 +26,8 @@ import { Addresses } from '../../modules/addresses/entities/addresses.entity';
       PhysicalProfile,
       Coupon,
       Addresses,
+      Wishlist,
+      WishlistItem,
     ]),
   ],
   providers: [DataSeeder],

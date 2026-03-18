@@ -15,6 +15,7 @@ import { ReviewModule } from './modules/review/review.module';
 import { SeedModule } from './database/seeds/seed.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AddressesModule } from './modules/addresses/addresses.module';
+import { WishlistModule } from './modules/wishlist/wishlist.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { AddressesModule } from './modules/addresses/addresses.module';
     SeedModule,
     AdminModule,
     AddressesModule,
+    WishlistModule,
   ],
 })
 export class AppModule {}
