@@ -4,6 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Request } from 'express';
 import { User } from '../../user/entities/user.entity';
 
 export interface JwtPayload {
@@ -11,6 +12,20 @@ export interface JwtPayload {
   email: string;
   role: string;
 }
+
+// Extract token from cookie or Bearer header
+const extractJwtFromCookieOrHeader = (req: Request): string | null => {
+  // 1. Try cookie first
+  if (req.cookies && req.cookies.access_token) {
+    return req.cookies.access_token;
+  }
+  // 2. Fallback to Bearer header
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+  return null;
+};
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -20,7 +35,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly userRepository: Repository<User>,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: extractJwtFromCookieOrHeader,
       ignoreExpiration: false,
       secretOrKey: configService.getOrThrow<string>('jwt.secret'),
     });
