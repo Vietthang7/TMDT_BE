@@ -1,0 +1,182 @@
+### Payment API Test File
+### Sử dụng với VS Code REST Client extension
+
+@baseUrl = http://localhost:3000/api
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxxx
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxxx
+
+### ============================================
+### PUBLIC APIs (không cần auth)
+### ============================================
+
+### 1. Lấy danh sách ngân hàng
+GET {{baseUrl}}/payment/banks
+
+### 2. Lấy thông tin ngân hàng theo BIN
+GET {{baseUrl}}/payment/banks/970422
+
+### 3. Lấy thông tin ngân hàng theo code
+GET {{baseUrl}}/payment/banks/MB
+
+### 4. Lấy thông tin ngân hàng theo shortName
+GET {{baseUrl}}/payment/banks/MBBank
+
+### 5. Generate QR Code (không tạo transaction)
+POST {{baseUrl}}/payment/generate-qr
+Content-Type: application/json
+
+{
+  "amount": 100000,
+  "description": "Test thanh toan"
+}
+
+### 6. Generate QR Code với custom options
+POST {{baseUrl}}/payment/generate-qr
+Content-Type: application/json
+
+{
+  "amount": 500000,
+  "description": "Don hang 12345",
+  "bankId": "970422",
+  "accountNo": "0343150904",
+  "accountName": "TRAN XUAN MINH",
+  "template": "compact2"
+}
+
+### 7. Generate QR Code - template qr_only
+POST {{baseUrl}}/payment/generate-qr
+Content-Type: application/json
+
+{
+  "amount": 250000,
+  "description": "QR only test",
+  "template": "qr_only"
+}
+
+### ============================================
+### USER APIs (cần JWT token)
+### ============================================
+
+### 8. Login để lấy token (dùng token này cho các API bên dưới)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "nguyenvana@gmail.com",
+  "password": "Customer@123"
+}
+
+### 9. Tạo transaction thanh toán cho order
+POST {{baseUrl}}/payment/create
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "orderId": "550e8400-e29b-41d4-a716-446655440000",
+  "paymentMethod": "bank_transfer"
+}
+
+### 10. Kiểm tra thanh toán (POST)
+POST {{baseUrl}}/payment/check
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "transactionCode": "TXNM1ABC2XYZ"
+}
+
+### 11. Kiểm tra thanh toán (GET)
+GET {{baseUrl}}/payment/check/TXNM1ABC2XYZ
+Authorization: Bearer {{token}}
+
+### 12. Lấy QR code của transaction
+GET {{baseUrl}}/payment/qrcode/TXNM1ABC2XYZ
+
+### 13. Lấy tất cả giao dịch của user
+GET {{baseUrl}}/payment/transactions
+Authorization: Bearer {{token}}
+
+### 14. Lấy chi tiết 1 giao dịch
+GET {{baseUrl}}/payment/transactions/a1b2c3d4-e5f6-7890-abcd-ef1234567890
+Authorization: Bearer {{token}}
+
+### 15. Lấy giao dịch theo order
+GET {{baseUrl}}/payment/order/550e8400-e29b-41d4-a716-446655440000
+Authorization: Bearer {{token}}
+
+### 16. Hủy giao dịch pending
+DELETE {{baseUrl}}/payment/transactions/a1b2c3d4-e5f6-7890-abcd-ef1234567890
+Authorization: Bearer {{token}}
+
+### ============================================
+### ADMIN APIs (cần JWT token với role admin)
+### ============================================
+
+### 17. Login admin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@fitness.com",
+  "password": "Admin@123456"
+}
+
+### 18. Admin xác nhận thanh toán thủ công
+POST {{baseUrl}}/payment/confirm/TXNM1ABC2XYZ?bankTransactionId=FT24015XXXXX
+Authorization: Bearer {{adminToken}}
+
+### 19. Admin dọn dẹp giao dịch hết hạn
+POST {{baseUrl}}/payment/cleanup
+Authorization: Bearer {{adminToken}}
+
+### ============================================
+### WEBHOOK (cho Casso/Sepay)
+### ============================================
+
+### 20. Webhook payment notification
+POST {{baseUrl}}/payment/webhook
+Content-Type: application/json
+X-Webhook-Secret: your_webhook_secret_here
+
+{
+  "transactionCode": "TXNM1ABC2XYZ",
+  "amount": 1590000,
+  "bankTransactionId": "FT24015XXXXX",
+  "description": "TXNM1ABC2XYZ thanh toan don hang"
+}
+
+### ============================================
+### FULL FLOW TEST
+### ============================================
+
+### Step 1: Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "nguyenvana@gmail.com",
+  "password": "Customer@123"
+}
+
+### Step 2: Tạo order (giả sử đã có order)
+# Cần có orderId từ việc tạo order trước
+
+### Step 3: Tạo payment transaction
+# @name createPayment
+POST {{baseUrl}}/payment/create
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.access_token}}
+
+{
+  "orderId": "your-order-id-here"
+}
+
+### Step 4: Kiểm tra thanh toán
+POST {{baseUrl}}/payment/check
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.access_token}}
+
+{
+  "transactionCode": "{{createPayment.response.body.data.transactionCode}}"
+}

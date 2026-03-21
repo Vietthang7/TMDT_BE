@@ -1,7 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { databaseConfig, jwtConfig, cloudinaryConfig, mailConfig } from './config';
+import { RedisModule } from '@nestjs-modules/ioredis';
+import {
+  databaseConfig,
+  jwtConfig,
+  cloudinaryConfig,
+  mailConfig,
+  redisConfig,
+  mbbankConfig,
+} from './config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { ProfileModule } from './modules/profile/profile.module';
@@ -16,13 +24,21 @@ import { SeedModule } from './database/seeds/seed.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AddressesModule } from './modules/addresses/addresses.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
+import { PaymentModule } from './modules/payment/payment.module';
 
 @Module({
   imports: [
     // ── Global Config ──────────────────────────────────
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, jwtConfig, cloudinaryConfig, mailConfig],
+      load: [
+        databaseConfig,
+        jwtConfig,
+        cloudinaryConfig,
+        mailConfig,
+        redisConfig,
+        mbbankConfig,
+      ],
       envFilePath: '.env',
     }),
 
@@ -32,6 +48,20 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) =>
         configService.getOrThrow('database'),
+    }),
+
+    // ── Redis ──────────────────────────────────────────
+    RedisModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'single',
+        url: `redis://${configService.get('redis.host')}:${configService.get('redis.port')}`,
+        options: {
+          password: configService.get('redis.password'),
+          db: configService.get('redis.db'),
+        },
+      }),
     }),
 
     // ── Feature Modules ────────────────────────────────
@@ -49,6 +79,7 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     AdminModule,
     AddressesModule,
     WishlistModule,
+    PaymentModule,
   ],
 })
 export class AppModule {}

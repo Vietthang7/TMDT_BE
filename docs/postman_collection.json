@@ -1,0 +1,1063 @@
+{
+  "info": {
+    "name": "Fitness Shop API",
+    "description": "API collection for Fitness E-commerce Backend\n\n## Services:\n- NestJS API: http://localhost:3000/api\n- AI Service: http://localhost:8001\n- Transaction Service: http://localhost:8000",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api"
+    },
+    {
+      "key": "ai_url",
+      "value": "http://localhost:8001"
+    },
+    {
+      "key": "transaction_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "product_id",
+      "value": ""
+    },
+    {
+      "key": "order_id",
+      "value": ""
+    },
+    {
+      "key": "transaction_code",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.accessToken) {",
+                  "    pm.collectionVariables.set('token', jsonData.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@fitness.com\",\n  \"password\": \"Admin@123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.accessToken) {",
+                  "    pm.collectionVariables.set('token', jsonData.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nguyenvana@gmail.com\",\n  \"password\": \"Customer@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@gmail.com\",\n  \"password\": \"NewUser@123\",\n  \"fullName\": \"Nguyen Van Test\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.length > 0) {",
+                  "    pm.collectionVariables.set('product_id', jsonData.data[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Search Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products?search=whey",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "whey"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Cart",
+      "item": [
+        {
+          "name": "Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cart",
+              "host": ["{{base_url}}"],
+              "path": ["cart"]
+            }
+          }
+        },
+        {
+          "name": "Add to Cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/items",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items"]
+            }
+          }
+        },
+        {
+          "name": "Update Cart Item",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/items/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items", "{{product_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Remove from Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cart/items/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items", "{{product_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Clear Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cart",
+              "host": ["{{base_url}}"],
+              "path": ["cart"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set('order_id', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addressId\": \"your-address-id\",\n  \"note\": \"Giao hang trong gio hanh chinh\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "Get My Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}", "cancel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Payment (QR + Transaction)",
+      "item": [
+        {
+          "name": "Create Payment (QR)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.transactionCode) {",
+                  "    pm.collectionVariables.set('transaction_code', jsonData.data.transactionCode);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{order_id}}\",\n  \"paymentMethod\": \"bank_transfer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payment/create",
+              "host": ["{{base_url}}"],
+              "path": ["payment", "create"]
+            },
+            "description": "Tao transaction va sinh ma QR VietQR de thanh toan"
+          }
+        },
+        {
+          "name": "Check Payment Status (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionCode\": \"{{transaction_code}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payment/check",
+              "host": ["{{base_url}}"],
+              "path": ["payment", "check"]
+            },
+            "description": "Kiem tra trang thai thanh toan - goi MB Bank API de verify"
+          }
+        },
+        {
+          "name": "Check Payment Status (GET)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/payment/check/{{transaction_code}}",
+              "host": ["{{base_url}}"],
+              "path": ["payment", "check", "{{transaction_code}}"]
+            }
+          }
+        },
+        {
+          "name": "Get QR Code URL",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payment/qrcode/{{transaction_code}}",
+              "host": ["{{base_url}}"],
+              "path": ["payment", "qrcode", "{{transaction_code}}"]
+            },
+            "description": "Lay lai QR code URL cua transaction"
+          }
+        },
+        {
+          "name": "Generate QR (No Transaction)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500000,\n  \"description\": \"THANHTOAN001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payment/generate-qr",
+              "host": ["{{base_url}}"],
+              "path": ["payment", "generate-qr"]
+            },
+            "description": "Tao QR code nhanh khong can tao transaction"
+          }
+        },
+        {
+          "name": "Get My Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/payment/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["payment", "transactions"]
+            }
+          }
+        },
+        {
+          "name": "Get Transaction by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/payment/transactions/{{transaction_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["payment", "transactions", "{{transaction_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Transactions by Order",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/payment/order/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["payment", "order", "{{order_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Transaction",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/payment/transactions/{{transaction_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["payment", "transactions", "{{transaction_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Banks List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payment/banks",
+              "host": ["{{base_url}}"],
+              "path": ["payment", "banks"]
+            },
+            "description": "Danh sach ngan hang Viet Nam ho tro VietQR"
+          }
+        },
+        {
+          "name": "Get Bank by Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payment/banks/MB",
+              "host": ["{{base_url}}"],
+              "path": ["payment", "banks", "MB"]
+            }
+          }
+        },
+        {
+          "name": "[Admin] Confirm Payment Manual",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/payment/confirm/{{transaction_code}}?bankTransactionId=FT24032212345678",
+              "host": ["{{base_url}}"],
+              "path": ["payment", "confirm", "{{transaction_code}}"],
+              "query": [
+                {
+                  "key": "bankTransactionId",
+                  "value": "FT24032212345678"
+                }
+              ]
+            },
+            "description": "Admin xac nhan thanh toan thu cong"
+          }
+        },
+        {
+          "name": "[Admin] Cleanup Expired",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/payment/cleanup",
+              "host": ["{{base_url}}"],
+              "path": ["payment", "cleanup"]
+            },
+            "description": "Don dep cac transaction het han"
+          }
+        },
+        {
+          "name": "Webhook Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-webhook-secret",
+                "value": "your-webhook-secret"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionCode\": \"{{transaction_code}}\",\n  \"amount\": 500000,\n  \"bankTransactionId\": \"FT24032212345678\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payment/webhook",
+              "host": ["{{base_url}}"],
+              "path": ["payment", "webhook"]
+            },
+            "description": "Webhook nhan thong bao thanh toan tu ben thu 3 (Casso, etc)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. AI Recommendation",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{ai_url}}/health",
+              "host": ["{{ai_url}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Get Similar Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{ai_url}}/similar/{{product_id}}?limit=10",
+              "host": ["{{ai_url}}"],
+              "path": ["similar", "{{product_id}}"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Tim san pham tuong tu dua tren vector similarity (pgvector)"
+          }
+        },
+        {
+          "name": "Generate All Embeddings",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{ai_url}}/embeddings/generate",
+              "host": ["{{ai_url}}"],
+              "path": ["embeddings", "generate"]
+            },
+            "description": "Tao embedding cho tat ca san pham chua co"
+          }
+        },
+        {
+          "name": "Generate Single Embedding",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{ai_url}}/embeddings/{{product_id}}",
+              "host": ["{{ai_url}}"],
+              "path": ["embeddings", "{{product_id}}"]
+            },
+            "description": "Tao/cap nhat embedding cho 1 san pham"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Transaction Service (MBBank)",
+      "item": [
+        {
+          "name": "Get Bank Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{transaction_url}}/transactions?from_date=00-00-00-01-03-2024&to_date=23-59-59-31-03-2024",
+              "host": ["{{transaction_url}}"],
+              "path": ["transactions"],
+              "query": [
+                {
+                  "key": "from_date",
+                  "value": "00-00-00-01-03-2024",
+                  "description": "Format: hh-mm-ss-dd-mm-yyyy"
+                },
+                {
+                  "key": "to_date",
+                  "value": "23-59-59-31-03-2024",
+                  "description": "Format: hh-mm-ss-dd-mm-yyyy"
+                }
+              ]
+            },
+            "description": "Lay danh sach giao dich tu MB Bank"
+          }
+        },
+        {
+          "name": "Get Transaction Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{transaction_url}}/transactions/count?from_date=00-00-00-01-03-2024&to_date=23-59-59-31-03-2024",
+              "host": ["{{transaction_url}}"],
+              "path": ["transactions", "count"],
+              "query": [
+                {
+                  "key": "from_date",
+                  "value": "00-00-00-01-03-2024"
+                },
+                {
+                  "key": "to_date",
+                  "value": "23-59-59-31-03-2024"
+                }
+              ]
+            },
+            "description": "Dem so luong giao dich"
+          }
+        },
+        {
+          "name": "Check Transaction by PIN",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{transaction_url}}/transactions/check-pin?pin={{transaction_code}}&from_date=00-00-00-01-03-2024&to_date=23-59-59-31-03-2024",
+              "host": ["{{transaction_url}}"],
+              "path": ["transactions", "check-pin"],
+              "query": [
+                {
+                  "key": "pin",
+                  "value": "{{transaction_code}}",
+                  "description": "Ma giao dich (transaction code)"
+                },
+                {
+                  "key": "from_date",
+                  "value": "00-00-00-01-03-2024"
+                },
+                {
+                  "key": "to_date",
+                  "value": "23-59-59-31-03-2024"
+                }
+              ]
+            },
+            "description": "Tim giao dich co chua ma PIN trong noi dung chuyen khoan"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Addresses",
+      "item": [
+        {
+          "name": "Get My Addresses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/addresses",
+              "host": ["{{base_url}}"],
+              "path": ["addresses"]
+            }
+          }
+        },
+        {
+          "name": "Create Address",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyen Van A\",\n  \"phone\": \"0901234567\",\n  \"province\": \"Ha Noi\",\n  \"district\": \"Cau Giay\",\n  \"ward\": \"Dich Vong\",\n  \"street\": \"123 Xuan Thuy\",\n  \"isDefault\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/addresses",
+              "host": ["{{base_url}}"],
+              "path": ["addresses"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Wishlist",
+      "item": [
+        {
+          "name": "Get Wishlist",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/wishlist",
+              "host": ["{{base_url}}"],
+              "path": ["wishlist"]
+            }
+          }
+        },
+        {
+          "name": "Add to Wishlist",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{product_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wishlist",
+              "host": ["{{base_url}}"],
+              "path": ["wishlist"]
+            }
+          }
+        },
+        {
+          "name": "Remove from Wishlist",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/wishlist/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["wishlist", "{{product_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "{{category_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Coupons",
+      "item": [
+        {
+          "name": "Validate Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"DISCOUNT10\",\n  \"orderAmount\": 500000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/coupons/validate",
+              "host": ["{{base_url}}"],
+              "path": ["coupons", "validate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Reviews",
+      "item": [
+        {
+          "name": "Get Product Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reviews/product/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["reviews", "product", "{{product_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"rating\": 5,\n  \"comment\": \"San pham rat tot, giao hang nhanh!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["reviews"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
