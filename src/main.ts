@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -8,6 +9,9 @@ async function bootstrap() {
 
   // ── Global prefix ──────────────────────────────────
   app.setGlobalPrefix('api');
+
+  // ── Cookie Parser ────────────────────────────────
+  app.use(cookieParser());
 
   // ── Validation pipe (class-validator / class-transformer) ──
   app.useGlobalPipes(
@@ -20,7 +24,10 @@ async function bootstrap() {
   );
 
   // ── CORS ───────────────────────────────────────────
-  app.enableCors();
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
+    credentials: true,
+  });
 
   // ── Swagger ────────────────────────────────────────
   const config = new DocumentBuilder()
