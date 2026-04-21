@@ -15,8 +15,8 @@ class Settings(BaseSettings):
     API_PORT: int = 8001
 
     # Model
-    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
-    EMBEDDING_DIMENSION: int = 384
+    EMBEDDING_MODEL: str = "paraphrase-multilingual-mpnet-base-v2"
+    EMBEDDING_DIMENSION: int = 768
 
     # Recommendation
     DEFAULT_LIMIT: int = 10

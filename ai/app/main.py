@@ -5,7 +5,14 @@ from typing import List
 from pydantic import BaseModel
 
 from .database import init_db, close_db
-from .services import find_similar_products, ensure_product_embedding, generate_all_embeddings
+from .services import (
+    find_similar_products,
+    ensure_product_embedding,
+    generate_all_embeddings,
+    regenerate_all_embeddings,
+    get_product_full_info,
+    get_products_by_ids,
+)
 from .config import get_settings
 
 settings = get_settings()
@@ -39,10 +46,27 @@ app.add_middleware(
 # Schemas
 # ────────────────────────────────────────────────────────────
 
+class ProductInfo(BaseModel):
+    id: str
+    name: str
+    description: str
+    price: float
+    images: List[str]
+    categories: List[str]
+    tags: List[str]
+
+
 class SimilarProductsResponse(BaseModel):
     success: bool
     product_id: str
     similar_ids: List[str]
+    count: int
+
+
+class ProductWithSimilarResponse(BaseModel):
+    success: bool
+    product: ProductInfo
+    similar_products: List[ProductInfo]
     count: int
 
 
@@ -60,6 +84,40 @@ class GenerateEmbeddingsResponse(BaseModel):
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy"}
+
+
+@app.get("/recommend/{product_id}", response_model=ProductWithSimilarResponse)
+async def get_product_recommendations(
+    product_id: str,
+    limit: int = Query(default=5, ge=1, le=20, description="Number of similar products"),
+):
+    """
+    Get product details with similar product recommendations.
+
+    Returns the source product info along with similar products for easy demo.
+    """
+    try:
+        # Get source product
+        product = await get_product_full_info(product_id)
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+
+        # Get similar product IDs
+        similar_ids = await find_similar_products(product_id, limit=limit)
+
+        # Get full info for similar products
+        similar_products = await get_products_by_ids(similar_ids)
+
+        return ProductWithSimilarResponse(
+            success=True,
+            product=product,
+            similar_products=similar_products,
+            count=len(similar_products),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/similar/{product_id}", response_model=SimilarProductsResponse)
@@ -101,6 +159,27 @@ async def generate_embeddings():
             success=True,
             generated=result["generated"],
             message=f"Generated embeddings for {result['generated']} products",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/embeddings/regenerate", response_model=GenerateEmbeddingsResponse)
+async def regenerate_embeddings():
+    """
+    Delete all existing embeddings and regenerate them.
+
+    Use this when:
+    - Changing the embedding model
+    - Updating product descriptions
+    """
+    try:
+        result = await regenerate_all_embeddings()
+
+        return GenerateEmbeddingsResponse(
+            success=True,
+            generated=result["generated"],
+            message=f"Regenerated embeddings for {result['generated']} products",
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

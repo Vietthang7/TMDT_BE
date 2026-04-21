@@ -24,16 +24,32 @@ async def init_db():
     async with pool.acquire() as conn:
         await conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
 
-        # Create embeddings table if not exists
-        await conn.execute("""
-            CREATE TABLE IF NOT EXISTS product_embeddings (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                product_id UUID NOT NULL UNIQUE,
-                embedding vector(384),
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
-            )
+        # Check if table exists and has correct dimension
+        dim_check = await conn.fetchval("""
+            SELECT atttypmod FROM pg_attribute a
+            JOIN pg_class c ON a.attrelid = c.oid
+            WHERE c.relname = 'product_embeddings'
+            AND a.attname = 'embedding'
         """)
+
+        expected_dim = settings.EMBEDDING_DIMENSION
+
+        if dim_check is not None and dim_check != expected_dim:
+            # Dimension changed, need to recreate table
+            await conn.execute("DROP TABLE IF EXISTS product_embeddings")
+            dim_check = None
+
+        if dim_check is None:
+            # Create table with correct dimension
+            await conn.execute(f"""
+                CREATE TABLE IF NOT EXISTS product_embeddings (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    product_id UUID NOT NULL UNIQUE,
+                    embedding vector({expected_dim}),
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    updated_at TIMESTAMP DEFAULT NOW()
+                )
+            """)
 
         # Create index for faster similarity search
         await conn.execute("""
