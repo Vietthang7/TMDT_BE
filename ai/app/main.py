@@ -54,6 +54,7 @@ class ProductInfo(BaseModel):
     images: List[str]
     categories: List[str]
     tags: List[str]
+    stock: int
 
 
 class SimilarProductsResponse(BaseModel):

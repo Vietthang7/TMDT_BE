@@ -35,7 +35,7 @@ async def get_product_full_info(product_id: str) -> Optional[dict]:
         row = await conn.fetchrow(
             """
             SELECT
-                p.id::text, p.name, p.description, p.price, p.images, p.tags,
+                p.id::text, p.name, p.description, p.price, p.images, p.tags, p.stock,
                 ARRAY_AGG(c.name) FILTER (WHERE c.name IS NOT NULL) as categories
             FROM products p
             LEFT JOIN product_categories pc ON p.id = pc.product_id
@@ -54,6 +54,7 @@ async def get_product_full_info(product_id: str) -> Optional[dict]:
                 "images": row["images"] or [],
                 "categories": row["categories"] or [],
                 "tags": row["tags"] or [],
+                "stock": row["stock"] or 0,
             }
         return None
 
@@ -67,7 +68,7 @@ async def get_products_by_ids(product_ids: List[str]) -> List[dict]:
         rows = await conn.fetch(
             """
             SELECT
-                p.id::text, p.name, p.description, p.price, p.images, p.tags,
+                p.id::text, p.name, p.description, p.price, p.images, p.tags, p.stock,
                 ARRAY_AGG(c.name) FILTER (WHERE c.name IS NOT NULL) as categories
             FROM products p
             LEFT JOIN product_categories pc ON p.id = pc.product_id
@@ -89,6 +90,7 @@ async def get_products_by_ids(product_ids: List[str]) -> List[dict]:
                 "images": row["images"] or [],
                 "categories": row["categories"] or [],
                 "tags": row["tags"] or [],
+                "stock": row["stock"] or 0,
             }
 
         return [products_map[pid] for pid in product_ids if pid in products_map]
