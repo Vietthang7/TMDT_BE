@@ -68,6 +68,17 @@ export class PaymentService {
     if (existingTransaction) {
       // Check if still valid
       if (new Date() < existingTransaction.expiredAt) {
+        // Regenerate QR in case bank config changed after transaction was created
+        const qrData = this.vietQRService.generatePaymentQR(
+          Number(existingTransaction.amount),
+          existingTransaction.transactionCode,
+        );
+        existingTransaction.qrCodeUrl = qrData.qrCodeUrl;
+        existingTransaction.accountNo = qrData.accountNo;
+        existingTransaction.accountName = qrData.accountName;
+        existingTransaction.bankCode = qrData.bankCode;
+        existingTransaction.bankName = qrData.bankName;
+        await this.transactionRepository.save(existingTransaction);
         return existingTransaction;
       }
       // Mark expired transaction

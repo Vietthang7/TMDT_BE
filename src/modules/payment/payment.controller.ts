@@ -23,7 +23,7 @@ import { Roles, CurrentUser } from '../auth/decorators';
 import { PaymentService } from './payment.service';
 import { BanksService } from './services/banks.service';
 import { VietQRService } from './services/vietqr.service';
-import { CreateTransactionDto, CheckPaymentDto, WebhookPaymentDto, GenerateQRDto } from './dto';
+import { CreateTransactionDto, CheckPaymentDto, WebhookPaymentDto, GenerateQRDto, SePayWebhookDto } from './dto';
 import { UserRole } from '../../common/enums';
 import { User } from '../user/entities/user.entity';
 
@@ -330,6 +330,56 @@ export class PaymentController {
       success: true,
       data: bank,
     };
+  }
+
+  // Webhook for external payment notification (e.g., from Casso, bank webhooks)
+  @Post('sepay-webhook')
+  @ApiOperation({ summary: 'Webhook for SePay integration' })
+  @ApiResponse({ status: 200, description: 'SePay webhook processed' })
+  async sepayWebhook(
+    @Body() dto: SePayWebhookDto,
+    @Headers('authorization') authHeader?: string,
+  ) {
+    // 1. Verify token
+    const expectedToken = this.configService.get<string>('SEPAY_WEBHOOK_TOKEN');
+    if (expectedToken) {
+      const providedToken = authHeader?.replace('Bearer ', '')?.replace('Apikey ', '');
+      if (providedToken !== expectedToken) {
+        return { success: false, message: 'Invalid token' };
+      }
+    }
+
+    // 2. Only process 'in' (nhận tiền)
+    if (dto.transferType && dto.transferType !== 'in') {
+      return { success: true, message: 'Ignored outbound transaction' };
+    }
+
+    // 3. Extract transaction code from content: "TMDTABCDE123456"
+    // Regex: TMDT followed by 11 alphanumeric characters
+    const match = dto.content.match(/TMDT[A-Z0-9]{11}/i);
+    if (!match) {
+      return { success: true, message: 'No valid transaction code found in content' };
+    }
+
+    const transactionCode = match[0].toUpperCase();
+
+    // 4. Find and check payment
+    const result = await this.paymentService.checkPayment(transactionCode);
+
+    if (result.status === 'pending' && result.transaction) {
+      // Verify amount
+      if (dto.transferAmount >= Number(result.transaction.amount)) {
+        await this.paymentService.confirmPayment(
+          transactionCode,
+          dto.referenceCode || dto.code || String(dto.id),
+        );
+        return { success: true, message: 'Payment confirmed successfully' };
+      } else {
+        return { success: true, message: 'Amount insufficient' };
+      }
+    }
+
+    return { success: true, message: `Payment status: ${result.status}` };
   }
 
   // Webhook for external payment notification (e.g., from Casso, bank webhooks)

@@ -5,12 +5,12 @@ export class WebhookPaymentDto {
   @ApiProperty({ description: 'Transaction code (in payment description)' })
   @IsNotEmpty()
   @IsString()
-  transactionCode: string;
+  transactionCode!: string;
 
   @ApiProperty({ description: 'Amount transferred' })
   @IsNotEmpty()
   @IsNumber()
-  amount: number;
+  amount!: number;
 
   @ApiPropertyOptional({ description: 'Bank transaction reference number' })
   @IsOptional()

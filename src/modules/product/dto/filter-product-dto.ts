@@ -35,6 +35,17 @@ export class FilterProductDto extends PaginationDto {
     @Min(0)
     maxPrice?: number;
 
+    @ApiPropertyOptional({ example: '123e4567-e89b-12d3-a456-426614174000' })
+    @IsOptional()
+    @IsString()
+    categoryId?: string;
+
+    @ApiPropertyOptional({ example: 10 })
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber()
+    stock?: number;
+
     @ApiPropertyOptional({
         enum: ProductSortBy,
         example: ProductSortBy.NEWEST,

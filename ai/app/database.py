@@ -13,6 +13,15 @@ pool: Optional[asyncpg.Pool] = None
 async def init_db():
     """Initialize database connection pool and pgvector extension."""
     global pool
+
+    # Enable pgvector extension BEFORE creating the pool with register_vector,
+    # because register_vector (used as pool init hook) requires the type to exist.
+    temp_conn = await asyncpg.connect(settings.database_url)
+    try:
+        await temp_conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
+    finally:
+        await temp_conn.close()
+
     pool = await asyncpg.create_pool(
         settings.database_url,
         min_size=2,
@@ -20,9 +29,7 @@ async def init_db():
         init=register_vector,
     )
 
-    # Enable pgvector extension
     async with pool.acquire() as conn:
-        await conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
 
         # Check if table exists and has correct dimension
         dim_check = await conn.fetchval("""

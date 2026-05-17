@@ -28,7 +28,7 @@ export class ProductService {
   }
 
   async findAll(query: FilterProductDto): Promise<PaginatedResult<Product>> {
-    const {page, limit, search, minPrice, maxPrice, sortBy} = query;
+    const {page, limit, search, minPrice, maxPrice, categoryId, stock, sortBy} = query;
     const { take, skip } = paginateRaw(page, limit);
     const qb = this.productRepository
       .createQueryBuilder('product')
@@ -40,6 +40,16 @@ export class ProductService {
         search: `%${search}%`
       }
       )
+    }
+    if(categoryId){
+      qb.andWhere('category.id = :categoryId', {
+        categoryId
+      })
+    }
+    if(stock !== undefined){
+      qb.andWhere('product.stock = :stock', {
+        stock
+      })
     }
     if(minPrice !== undefined){
       qb.andWhere('product.price >= :minPrice',{

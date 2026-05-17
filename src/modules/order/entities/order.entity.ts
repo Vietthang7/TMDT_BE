@@ -11,11 +11,16 @@ import { User } from '../../user/entities/user.entity';
 import { OrderItem } from './order-item.entity';
 import { Coupon } from '../../coupon/entities/coupon.entity';
 import { OrderStatus } from '../../../common/enums';
+import { Addresses } from '../../addresses/entities/addresses.entity';
+import { JoinColumn } from 'typeorm';
 
 @Entity('orders')
 export class Order {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ unique: true, nullable: true })
+  orderCode: string;
 
   @ManyToOne(() => User, (user) => user.orders, { onDelete: 'CASCADE' })
   user: User;
@@ -47,6 +52,10 @@ export class Order {
 
   @Column({ nullable: true })
   couponCode: string;
+
+  @ManyToOne(() => Addresses, { nullable: true })
+  @JoinColumn({ name: 'shippingAddress' })
+  addressEntity: Addresses;
 
   @Column({ nullable: true })
   shippingAddress: string;
