@@ -14,68 +14,68 @@ import { PaymentStatus, PaymentMethod } from '../../../common/enums';
 @Entity('transactions')
 export class Transaction {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Index()
   @Column({ unique: true })
-  transactionCode: string;
+  transactionCode!: string;
 
   @ManyToOne(() => Order, { onDelete: 'CASCADE' })
-  order: Order;
+  order!: Order;
 
   @Column()
-  orderId: string;
+  orderId!: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  user: User;
+  @ManyToOne(() => User, { onDelete: 'CASCADE', nullable: true })
+  user!: User | null;
 
-  @Column()
-  userId: string;
+  @Column({ nullable: true })
+  userId!: string | null;
 
   @Column({ type: 'decimal', precision: 12, scale: 2 })
-  amount: number;
+  amount!: number;
 
   @Column({
     type: 'enum',
     enum: PaymentMethod,
     default: PaymentMethod.BANK_TRANSFER,
   })
-  paymentMethod: PaymentMethod;
+  paymentMethod!: PaymentMethod;
 
   @Column({
     type: 'enum',
     enum: PaymentStatus,
     default: PaymentStatus.PENDING,
   })
-  status: PaymentStatus;
+  status!: PaymentStatus;
 
   @Column({ nullable: true })
-  bankCode: string;
+  bankCode!: string;
 
   @Column({ nullable: true })
-  bankName: string;
+  bankName!: string;
 
   @Column({ nullable: true })
-  accountNo: string;
+  accountNo!: string;
 
   @Column({ nullable: true })
-  accountName: string;
+  accountName!: string;
 
   @Column({ nullable: true })
-  qrCodeUrl: string;
+  qrCodeUrl!: string;
 
   @Column({ nullable: true })
-  bankTransactionId: string;
+  bankTransactionId!: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  paidAt: Date;
+  paidAt!: Date;
 
   @Column({ type: 'timestamp' })
-  expiredAt: Date;
+  expiredAt!: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

@@ -9,7 +9,6 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -18,20 +17,31 @@ import {
 } from '@nestjs/swagger';
 import { OrderService } from './order.service';
 import { CreateOrderDto, UpdateOrderStatusDto, FilterOrderDto } from './dto';
+import { GuestCheckoutDto } from './dto/guest-checkout.dto';
+import { Public } from '../auth/decorators/public.decorator';
 import { CreateOrderAdminDto } from './dto/create-order-admin.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../user/entities/user.entity';
 import { UserRole } from '../../common/enums';
-import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @ApiTags('Orders')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 @Controller('orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
+
+  @Public()
+  @Post('guest-checkout')
+  @ApiOperation({ summary: 'Guest checkout: create order without authentication' })
+  @ApiResponse({ status: 201, description: 'Guest order created.' })
+  @ApiResponse({ status: 400, description: 'Invalid items or insufficient stock.' })
+  guestCheckout(@Body() dto: GuestCheckoutDto) {
+    return this.orderService.guestCheckout(dto);
+  }
 
   @Post('checkout')
   @ApiOperation({ summary: 'Checkout: create order from cart items' })

@@ -22,10 +22,10 @@ export class Order {
   @Column({ unique: true, nullable: true })
   orderCode: string;
 
-  @ManyToOne(() => User, (user) => user.orders, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.orders, { onDelete: 'CASCADE', nullable: true })
   user: User;
 
-  @Column()
+  @Column({ nullable: true })
   userId: string;
 
   @OneToMany(() => OrderItem, (item) => item.order, { cascade: true })
@@ -52,6 +52,18 @@ export class Order {
 
   @Column({ nullable: true })
   couponCode: string;
+
+  @Column({ nullable: true })
+  guestName: string;
+
+  @Column({ nullable: true })
+  guestEmail: string;
+
+  @Column({ nullable: true })
+  guestPhone: string;
+
+  @Column({ nullable: true, type: 'text' })
+  guestShippingAddress: string;
 
   @ManyToOne(() => Addresses, { nullable: true })
   @JoinColumn({ name: 'shippingAddress' })

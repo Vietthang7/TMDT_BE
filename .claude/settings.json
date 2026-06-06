@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"C:\\\\TMDT_V2\\\\prompts\")"
+    ],
+    "additionalDirectories": [
+      "C:\\TMDT_V2"
+    ]
+  }
+}

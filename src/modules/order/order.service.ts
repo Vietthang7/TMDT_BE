@@ -9,6 +9,7 @@ import { ProductService } from '../product/product.service';
 import { CouponService } from '../coupon/coupon.service';
 import { MailService } from '../mail/mail.service';
 import { CreateOrderDto, UpdateOrderStatusDto, FilterOrderDto } from './dto';
+import { GuestCheckoutDto } from './dto/guest-checkout.dto';
 import { CreateOrderAdminDto } from './dto/create-order-admin.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { AddressesService } from '../addresses/addresses.service';
@@ -44,7 +45,7 @@ export class OrderService {
 
     const todayStart = new Date(today.setHours(0, 0, 0, 0));
     const todayEnd = new Date(today.setHours(23, 59, 59, 999));
-    
+
     const countToday = await this.orderRepository
       .createQueryBuilder('order')
       .where('order.createdAt >= :todayStart', { todayStart })
@@ -109,7 +110,7 @@ export class OrderService {
       couponId,
       couponCode,
       items: orderItems,
-      // For Admin-created orders, it might be auto-confirmed or delivered depending on business logic, 
+      // For Admin-created orders, it might be auto-confirmed or delivered depending on business logic,
       // but default PENDING is fine, they can update it after.
     });
 
@@ -206,13 +207,83 @@ export class OrderService {
     return savedOrder;
   }
 
+  async guestCheckout(dto: GuestCheckoutDto): Promise<Order> {
+    if (!dto.items || dto.items.length === 0) {
+      throw new BadRequestException('Order items cannot be empty');
+    }
+
+    let subtotal = 0;
+    const orderItems: OrderItem[] = [];
+
+    for (const item of dto.items) {
+      const product = await this.productService.findById(item.productId);
+
+      if (product.stock < item.quantity) {
+        throw new BadRequestException(
+          `Insufficient stock for product "${product.name}"`,
+        );
+      }
+
+      subtotal += Number(product.price) * item.quantity;
+
+      const orderItem = this.orderItemRepository.create({
+        productId: item.productId,
+        quantity: item.quantity,
+        priceAtPurchase: product.price,
+      });
+      orderItems.push(orderItem);
+
+      product.stock -= item.quantity;
+      await this.productService.update(product.id, { stock: product.stock });
+    }
+
+    let discountAmount = 0;
+    let couponId: string | undefined;
+    let couponCode: string | undefined;
+
+    if (dto.couponCode) {
+      const coupon = await this.couponService.validateCoupon(dto.couponCode, subtotal);
+      discountAmount = this.couponService.calculateDiscount(coupon, subtotal);
+      couponId = coupon.id;
+      couponCode = coupon.code;
+      await this.couponService.incrementUsage(coupon.id);
+    }
+
+    const totalAmount = subtotal - discountAmount;
+    const orderCode = await this.generateOrderCode();
+
+    const order = this.orderRepository.create({
+      userId: undefined,
+      orderCode,
+      guestName: dto.guestName,
+      guestEmail: dto.guestEmail,
+      guestPhone: dto.guestPhone,
+      guestShippingAddress: dto.guestShippingAddress,
+      shippingAddress: dto.guestShippingAddress,
+      totalAmount,
+      discountAmount,
+      couponId,
+      couponCode,
+      items: orderItems,
+    });
+
+    const savedOrder = await this.orderRepository.save(order);
+
+    // Gửi email xác nhận cho guest
+    this.mailService
+      .sendOrderConfirmation(dto.guestEmail, savedOrder)
+      .catch((err) => this.logger.error(`Guest mail error: ${err.message}`));
+
+    return savedOrder;
+  }
+
   async findAllByUser(
     userId: string,
     query: FilterOrderDto,
   ): Promise<PaginatedResult<Order>> {
     const { take, skip } = paginateRaw(query.page, query.limit);
     const whereCondition: any = { userId };
-    
+
     if (query.status) {
       whereCondition.status = query.status;
     }
@@ -230,7 +301,7 @@ export class OrderService {
   async findAll(query: FilterOrderDto): Promise<PaginatedResult<Order>> {
     const { take, skip } = paginateRaw(query.page, query.limit);
     const whereCondition: any = {};
-    
+
     if (query.status) {
       whereCondition.status = query.status;
     }

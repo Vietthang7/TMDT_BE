@@ -40,15 +40,20 @@ export class PaymentService {
    * Create a new payment transaction
    */
   async createTransaction(
-    userId: string,
+    userId: string | null,
     dto: CreateTransactionDto,
   ): Promise<Transaction> {
     // Find the order
     const order = await this.orderRepository.findOne({
-      where: { id: dto.orderId, userId },
+      where: userId ? { id: dto.orderId, userId } : { id: dto.orderId },
     });
 
     if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    // Nếu là order của user đã đăng nhập, kiểm tra ownership
+    if (userId && order && order.userId && order.userId !== userId) {
       throw new NotFoundException('Order not found');
     }
 
@@ -102,7 +107,7 @@ export class PaymentService {
     const transaction = this.transactionRepository.create({
       transactionCode,
       orderId: order.id,
-      userId,
+      userId: userId ?? undefined,
       amount: Number(order.totalAmount) - Number(order.discountAmount),
       paymentMethod: dto.paymentMethod || PaymentMethod.BANK_TRANSFER,
       status: PaymentStatus.PENDING,

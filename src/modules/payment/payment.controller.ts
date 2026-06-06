@@ -16,7 +16,8 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Public } from '../auth/decorators/public.decorator';
 import { ConfigService } from '@nestjs/config';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles, CurrentUser } from '../auth/decorators';
@@ -28,6 +29,7 @@ import { UserRole } from '../../common/enums';
 import { User } from '../user/entities/user.entity';
 
 @ApiTags('Payment')
+@UseGuards(JwtAuthGuard)
 @Controller('payment')
 export class PaymentController {
   constructor(
@@ -37,19 +39,18 @@ export class PaymentController {
     private readonly configService: ConfigService,
   ) {}
 
+  @Public()
   @Post('create')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a payment transaction with VietQR' })
   @ApiResponse({ status: 201, description: 'Transaction created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid order or already paid' })
   @ApiResponse({ status: 404, description: 'Order not found' })
   async createTransaction(
-    @CurrentUser() user: User,
+    @CurrentUser() user: User | undefined,
     @Body() dto: CreateTransactionDto,
   ) {
     const transaction = await this.paymentService.createTransaction(
-      user.id,
+      user?.id ?? null,
       dto,
     );
 
@@ -76,9 +77,8 @@ export class PaymentController {
     };
   }
 
+  @Public()
   @Post('check')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Check payment status by transaction code' })
   @ApiResponse({ status: 200, description: 'Payment status retrieved' })
   async checkPayment(@Body() dto: CheckPaymentDto) {
@@ -102,9 +102,8 @@ export class PaymentController {
     };
   }
 
+  @Public()
   @Get('check/:transactionCode')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Check payment status by transaction code (GET)' })
   async checkPaymentGet(@Param('transactionCode') transactionCode: string) {
     const result = await this.paymentService.checkPayment(transactionCode);
@@ -128,7 +127,6 @@ export class PaymentController {
   }
 
   @Get('transactions')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user transactions' })
   async getUserTransactions(@CurrentUser() user: User) {
@@ -141,7 +139,6 @@ export class PaymentController {
   }
 
   @Get('transactions/:id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get transaction by ID' })
   async getTransaction(@CurrentUser() user: User, @Param('id') id: string) {
@@ -154,7 +151,6 @@ export class PaymentController {
   }
 
   @Get('order/:orderId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get transactions for an order' })
   async getTransactionsByOrder(
@@ -173,7 +169,6 @@ export class PaymentController {
   }
 
   @Delete('transactions/:id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancel a pending transaction' })
   async cancelTransaction(@CurrentUser() user: User, @Param('id') id: string) {
@@ -191,7 +186,7 @@ export class PaymentController {
 
   // Admin endpoints
   @Post('confirm/:transactionCode')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Manually confirm a payment (Admin only)' })
@@ -212,7 +207,7 @@ export class PaymentController {
   }
 
   @Post('cleanup')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cleanup expired transactions (Admin only)' })
@@ -226,6 +221,7 @@ export class PaymentController {
   }
 
   // QR Code API
+  @Public()
   @Get('qrcode/:transactionCode')
   @ApiOperation({ summary: 'Get QR code URL for a transaction' })
   @ApiResponse({ status: 200, description: 'QR code URL' })
@@ -252,6 +248,7 @@ export class PaymentController {
     };
   }
 
+  @Public()
   @Post('generate-qr')
   @ApiOperation({ summary: 'Generate VietQR code URL (without creating transaction)' })
   @ApiResponse({ status: 200, description: 'QR code generated' })
@@ -298,6 +295,7 @@ export class PaymentController {
   }
 
   // Banks API
+  @Public()
   @Get('banks')
   @ApiOperation({ summary: 'Get list of supported Vietnamese banks' })
   @ApiResponse({ status: 200, description: 'List of banks' })
@@ -310,6 +308,7 @@ export class PaymentController {
     };
   }
 
+  @Public()
   @Get('banks/:bankId')
   @ApiOperation({ summary: 'Get bank by BIN or code' })
   @ApiResponse({ status: 200, description: 'Bank details' })
@@ -333,6 +332,7 @@ export class PaymentController {
   }
 
   // Webhook for external payment notification (e.g., from Casso, bank webhooks)
+  @Public()
   @Post('sepay-webhook')
   @ApiOperation({ summary: 'Webhook for SePay integration' })
   @ApiResponse({ status: 200, description: 'SePay webhook processed' })
@@ -383,6 +383,7 @@ export class PaymentController {
   }
 
   // Webhook for external payment notification (e.g., from Casso, bank webhooks)
+  @Public()
   @Post('webhook')
   @ApiOperation({ summary: 'Webhook for payment confirmation from external services' })
   @ApiResponse({ status: 200, description: 'Payment processed' })
