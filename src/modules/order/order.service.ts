@@ -253,13 +253,11 @@ export class OrderService {
     const orderCode = await this.generateOrderCode();
 
     const order = this.orderRepository.create({
-      userId: undefined,
       orderCode,
       guestName: dto.guestName,
       guestEmail: dto.guestEmail,
       guestPhone: dto.guestPhone,
       guestShippingAddress: dto.guestShippingAddress,
-      shippingAddress: dto.guestShippingAddress,
       totalAmount,
       discountAmount,
       couponId,
